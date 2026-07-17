@@ -529,7 +529,7 @@
             const supabaseKey = 'sb_publishable_pYAcBR92hHyW_-2Qks4dRw_IhnIOnpy';
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-            supabase.from('quiz_results').insert([
+            supabase.from('Geburiquizresults').insert([
                 { score: score, total: questions.length }
             ]).then(({ data, error }) => {
                 if (error) console.error("Fehler beim Speichern in Supabase:", error);

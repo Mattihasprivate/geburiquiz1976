@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geburtstags-Quiz: 50 Jahre</title>
+    <!-- Einbinden von modernen Schriftarten von Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <!-- Einbinden einer Bibliothek für Feuerwerk/Konfetti-Effekte am Ende -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* HELLER, FESTLICHER GEBURTSTAGS-LOOK */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #f6e6cd 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Hintergrund-Dekorationen (Ballons etc.) */
+        .background-decorations {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Verhindert, dass sie Klicks blockieren */
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            bottom: -100px; /* Startpunkt außerhalb des sichtbaren Bereichs unten */
+            font-size: 3.5rem;
+            animation-name: floatUp;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            opacity: 0.6;
+        }
+
+        /* Animation für das Aufsteigen der Ballons */
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-55vh) rotate(10deg); }
+            100% { transform: translateY(-110vh) rotate(-10deg); }
+        }
+
+        #app {
+            position: relative;
+            z-index: 1; /* Damit das Quiz über den fliegenden Ballons liegt */
+            width: 100%;
+            max-width: 650px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Helle, freundliche Box mit leichtem Schatten */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #e8d08f;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        h1, h2 {
+            font-family: 'Playfair Display', serif;
+            color: #b8860b; 
+            text-align: center;
+            margin-top: 0;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        .progress {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 14px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Antwort-Buttons im hellen Design */
+        .option-btn {
+            background: #ffffff;
+            border: 2px solid #e8d08f;
+            border-radius: 12px;
+            color: #34495e;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            padding: 16px 20px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #fdf8eb;
+            border-color: #d4af37;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .option-btn.correct {
+            background: #e8f8f5;
+            border-color: #2ecc71;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: #fdedec;
+            border-color: #e74c3c;
+            color: #c0392b;
+            opacity: 0.8;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        .feedback {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            animation: slideIn 0.4s ease-out;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .feedback.success {
+            background: rgba(46, 204, 113, 0.15);
+            border-left: 4px solid #2ecc71;
+            color: #27ae60;
+        }
+
+        .feedback.error {
+            background: rgba(231, 76, 60, 0.15);
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+
+        /* Knöpfe für "Weiter" und "Neustart" */
+        .action-btn {
+            display: none; 
+            width: 100%;
+            padding: 16px;
+            margin-top: 30px;
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: 600;
+            color: #b8860b;
+            margin: 20px 0;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .prize-container {
+            margin-top: 30px;
+            padding: 25px;
+            background: #fff9eb;
+            border: 2px dashed #d4af37;
+            border-radius: 12px;
+        }
+
+        /* Animationen */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fliegende Dekorationen im Hintergrund -->
+    <div class="background-decorations">
+        <div class="floating-emoji" style="left: 5%; animation-duration: 18s; animation-delay: 0s;">🎈</div>
+        <div class="floating-emoji" style="left: 20%; animation-duration: 22s; animation-delay: 4s;">🎊</div>
+        <div class="floating-emoji" style="left: 80%; animation-duration: 15s; animation-delay: 2s;">🎈</div>
+        <div class="floating-emoji" style="left: 65%; animation-duration: 20s; animation-delay: 7s;">🎁</div>
+        <div class="floating-emoji" style="left: 35%; animation-duration: 19s; animation-delay: 11s;">🥳</div>
+        <div class="floating-emoji" style="left: 90%; animation-duration: 25s; animation-delay: 5s;">🎈</div>
+        <div class="floating-emoji" style="left: 50%; animation-duration: 21s; animation-delay: 1s;">🎉</div>
+    </div>
+
+    <div id="app">
+        <!-- STARTBILDSCHIRM / QUIZ BEREICH -->
+        <div id="quiz-screen" class="glass-panel">
+            <h1 id="quiz-title">✨ 50 Jahre ✨<br>Das Geburtstags-Quiz</h1>
+            <div class="subtitle">Eine Reise zurück ins Jahr 1976 🥂</div>
+            <div class="progress" id="progress-text">Frage 1 von 10</div>
+            
+            <div class="question-text" id="question-text">Lädt...</div>
+            
+            <div class="options-container" id="options-container">
+                <!-- Buttons werden per JavaScript eingefügt -->
+            </div>
+
+            <div id="feedback-box" class="feedback">
+                <!-- Feedback Text wird hier angezeigt -->
+            </div>
+
+            <button id="next-btn" class="action-btn" onclick="nextQuestion()">Nächste Frage</button>
+        </div>
+
+        <!-- ERGEBNIS BEREICH -->
+        <div id="result-screen" class="glass-panel result-screen">
+            <h1>Dein Ergebnis 🎁</h1>
+            <div class="score-display" id="score-text">0 / 10</div>
+            
+            <div id="result-message">
+                <!-- Motivierender oder gratulierender Text -->
+            </div>
+
+            <!-- GEWINN-PLATZHALTER: Nur sichtbar, wenn über 80% richtig -->
+            <div id="prize-section" class="prize-container" style="display: none;">
+                <h2>Herzlichen Glückwunsch! 🥂</h2>
+                
+                <!-- ========================================== -->
+                <!-- HIER KANNST DU DEINEN GEWINNTEXT EINFÜGEN! -->
+                <!-- ========================================== -->
+                <p style="font-size: 1.1rem;">
+                    <strong>Dein Gewinn:</strong><br><br>
+                   Es exklusivs Geburizmittag chez Dänikers in Bauma.
+                </p>
+                <!-- ========================================== -->
+
+            </div>
+
+            <button class="action-btn" style="display: block; margin-top: 40px;" onclick="restartQuiz()">Quiz erneut spielen</button>
+        </div>
+    </div>
+
+    <script>
+        // Die Fragen und Antworten
+        const questions = [
+            {
+                question: "Welches heute weltbekannte Technologieunternehmen wurde am 1. April 1976 in einer Garage in Kalifornien gegründet?",
+                options: ["Microsoft", "Apple", "IBM", "Intel"],
+                correctAnswer: 1,
+                praise: "Richtig! Steve Jobs und Steve Wozniak gründeten Apple am 1. April 1976.",
+                correction: "Falsch getippt. Es war Apple, das am 1. April 1976 das Licht der Welt erblickte."
+            },
+            {
+                question: "Welches Überschallflugzeug startete im Januar 1976 zu seinen ersten kommerziellen Passagierflügen?",
+                options: ["Boeing 747", "Airbus A300", "Concorde", "Tupolew Tu-144"],
+                correctAnswer: 2,
+                praise: "Perfekt! Die Concorde revolutionierte 1976 den Flugverkehr.",
+                correction: "Leider nein. Es war die berühmte Concorde, die 1976 den Passagierbetrieb aufnahm."
+            },
+            {
+                question: "In welcher kanadischen Stadt fanden im Sommer 1976 die Olympischen Sommerspiele statt?",
+                options: ["Vancouver", "Toronto", "Montreal", "Ottawa"],
+                correctAnswer: 2,
+                praise: "Klasse! Die Olympischen Spiele 1976 wurden in Montreal ausgetragen.",
+                correction: "Das stimmt nicht ganz. Die Spiele fanden 1976 in Montreal statt."
+            },
+            {
+                question: "Welcher schwedische Pop-Export veröffentlichte 1976 den Welthit 'Dancing Queen'?",
+                options: ["Roxette", "ABBA", "Ace of Base", "The Cardigans"],
+                correctAnswer: 1,
+                praise: "Super! 'Dancing Queen' von ABBA wurde 1976 zu einem globalen Hit.",
+                correction: "Leider falsch. Es war ABBA mit ihrem Hit 'Dancing Queen'."
+            },
+            {
+                question: "Welcher Kultfilm mit Sylvester Stallone als Underdog-Boxer kam 1976 in die Kinos und gewann später den Oscar für den besten Film?",
+                options: ["Rambo", "Rocky", "Der Pate", "Taxi Driver"],
+                correctAnswer: 1,
+                praise: "Richtig! 'Rocky' eroberte 1976 die Kinoleinwände.",
+                correction: "Das war leider nicht richtig. Es war 'Rocky', der 1976 Premiere feierte."
+            },
+            {
+                question: "Welche berühmte Puppen-Comedy-Serie mit Kermit dem Frosch und Miss Piggy feierte 1976 ihre TV-Premiere?",
+                options: ["Die Sesamstraße", "Die Fraggles", "Die Muppet Show", "Hallo Spencer"],
+                correctAnswer: 2,
+                praise: "Hervorragend! Die Muppet Show startete 1976 ihren Siegeszug.",
+                correction: "Knapp daneben. Es war Die Muppet Show, die 1976 zum ersten Mal ausgestrahlt wurde."
+            },
+            {
+                question: "Welche Raumsonde der NASA landete im Juli 1976 als erstes US-Raumschiff erfolgreich auf dem Mars?",
+                options: ["Apollo 11", "Voyager 1", "Pioneer 10", "Viking 1"],
+                correctAnswer: 3,
+                praise: "Genial! Viking 1 schickte 1976 die ersten Bilder von der Marsoberfläche zur Erde.",
+                correction: "Schade. Die richtige Antwort ist Viking 1."
+            },
+            {
+                question: "Welcher Formel-1-Rennfahrer überlebte 1976 einen dramatischen Feuerunfall auf dem Nürburgring?",
+                options: ["James Hunt", "Niki Lauda", "Ayrton Senna", "Jackie Stewart"],
+                correctAnswer: 1,
+                praise: "Richtig! Niki Lauda zeigte nach seinem Unfall 1976 ein unglaubliches Comeback.",
+                correction: "Leider nein. Es war Niki Lauda, der 1976 diesen schweren Unfall hatte."
+            },
+            {
+                question: "Was eröffnete im Oktober 1976 in Toronto und war für lange Zeit das höchste freistehende Bauwerk der Welt?",
+                options: ["Der CN Tower", "Das World Trade Center", "Der Sears Tower", "Das Empire State Building"],
+                correctAnswer: 0,
+                praise: "Exzellent! Der CN Tower prägt seit 1976 die Skyline von Toronto.",
+                correction: "Falsch getippt. Es war der CN Tower, der 1976 eröffnet wurde."
+            },
+            {
+                question: "Welcher bekannte britische Musiker und Ex-Beatle veröffentlichte 1976 mit seiner Band 'Wings' das erfolgreiche Album 'Wings at the Speed of Sound'?",
+                options: ["John Lennon", "George Harrison", "Ringo Starr", "Paul McCartney"],
+                correctAnswer: 3,
+                praise: "Großartig! Paul McCartney feierte 1976 mit den Wings riesige Erfolge.",
+                correction: "Leider falsch. Es war Paul McCartney."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const questionTextElement = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressTextElement = document.getElementById('progress-text');
+        const feedbackBox = document.getElementById('feedback-box');
+        const nextBtn = document.getElementById('next-btn');
+        
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+
+        // Funktion zum Laden der aktuellen Frage
+        function loadQuestion() {
+            // Reset state
+            feedbackBox.style.display = 'none';
+            nextBtn.style.display = 'none';
+            optionsContainer.innerHTML = '';
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // Text updaten
+            progressTextElement.textContent = `Frage ${currentQuestionIndex + 1} von ${questions.length}`;
+            questionTextElement.textContent = currentQuestion.question;
+
+            // Buttons erstellen
+            currentQuestion.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.onclick = () => selectAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Funktion zur Auswertung der Antwort
+        function selectAnswer(selectedIndex, clickedButton) {
+            const currentQuestion = questions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            // Alle Buttons deaktivieren
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Prüfen ob richtig oder falsch
+            if (selectedIndex === currentQuestion.correctAnswer) {
+                // Richtig!
+                clickedButton.classList.add('correct');
+                feedbackBox.textContent = currentQuestion.praise;
+                feedbackBox.className = 'feedback success';
+                score++;
+                
+                // Kleiner Konfetti-Spritzer bei richtiger Antwort
+                confetti({
+                    particleCount: 30,
+                    spread: 50,
+                    origin: { y: 0.8 },
+                    colors: ['#2ecc71', '#d4af37', '#ffffff']
+                });
+
+            } else {
+                // Falsch!
+                clickedButton.classList.add('wrong');
+                // Zeige den richtigen Button an
+                buttons[currentQuestion.correctAnswer].classList.add('correct');
+                feedbackBox.textContent = currentQuestion.correction;
+                feedbackBox.className = 'feedback error';
+            }
+
+            feedbackBox.style.display = 'block';
+
+            // Button-Text ändern, falls es die letzte Frage ist
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = 'Ergebnis anzeigen';
+            } else {
+                nextBtn.textContent = 'Nächste Frage';
+            }
+            
+            nextBtn.style.display = 'block';
+        }
+
+        // Zur nächsten Frage springen oder Ergebnis zeigen
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        // Feuerwerk/Konfetti Funktion für das Ende
+        function shootConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                }));
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                }));
+            }, 250);
+        }
+
+        // Ergebnisseite anzeigen
+        function showResult() {
+            quizScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+            
+            document.getElementById('score-text').textContent = `${score} / ${questions.length}`;
+            
+            const resultMessage = document.getElementById('result-message');
+            const prizeSection = document.getElementById('prize-section');
+            
+            // Prozentberechnung
+            const percentage = (score / questions.length) * 100;
+
+            if (percentage >= 80) {
+                // Bestanden (>80%)
+                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Fantastisch! Du hast ein großartiges Wissen über dein Geburtsjahr bewiesen. Zur Feier des Tages haben wir eine besondere Überraschung für dich.</p>`;
+                prizeSection.style.display = 'block';
+                
+                // RIESIGES KONFETTI BEIM GEWINN
+                shootConfetti();
+
+            } else {
+                // Nicht bestanden (<80%)
+                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Das war schon sehr gut, aber da ist noch Luft nach oben! Wir wissen, dass du das besser kannst. Versuche es doch gleich noch einmal und hol dir deinen Preis!</p>`;
+                prizeSection.style.display = 'none';
+            }
+        }
+
+        // Quiz komplett zurücksetzen
+        function restartQuiz() {
+            score = 0;
+            currentQuestionIndex = 0;
+            resultScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            loadQuestion();
+        }
+
+        // Quiz starten beim ersten Laden
+        loadQuestion();
+    </script>
+</body>
+</html>

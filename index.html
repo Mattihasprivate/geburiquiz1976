@@ -298,6 +298,11 @@
                 </p>
                 <!-- ========================================== -->
 
+                <p style="font-size: 1.1rem; margin-top: 20px;">
+                    Bitte klicke auf den mailto Button und schicke dein Resultat nach Bauma:
+                </p>
+                <button id="email-btn" class="action-btn" style="display: block; margin-top: 15px;">Resultat senden ✉️</button>
+
             </div>
 
             <button class="action-btn" style="display: block; margin-top: 40px;" onclick="restartQuiz()">Quiz erneut spielen</button>
@@ -515,6 +520,13 @@
                 resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Fantastisch, Karin! Du hast ein großartiges Wissen über dein Geburtsjahr bewiesen. Zur Feier des Tages haben wir eine besondere Überraschung für dich.</p>`;
                 prizeSection.style.display = 'block';
                 
+                // Mailto-Logik an den neuen Button hängen
+                document.getElementById('email-btn').onclick = () => {
+                    const subject = encodeURIComponent("Karin hat das Quiz beendet!");
+                    const body = encodeURIComponent(`Karin hat das Quiz erfolgreich beendet!\nErreichte Punkte: ${score} von ${questions.length}`);
+                    window.location.href = `mailto:m.daeniker@etik.com?subject=${subject}&body=${body}`;
+                };
+
                 // RIESIGES KONFETTI BEIM GEWINN
                 shootConfetti();
 

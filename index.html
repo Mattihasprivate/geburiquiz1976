@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
     <!-- Einbinden einer Bibliothek für Feuerwerk/Konfetti-Effekte am Ende -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* HELLER, FESTLICHER GEBURTSTAGS-LOOK */
         body {
@@ -258,7 +260,7 @@
         <!-- STARTBILDSCHIRM / QUIZ BEREICH -->
         <div id="quiz-screen" class="glass-panel">
             <h1 id="quiz-title">✨ 50 Jahre ✨<br>Das Geburtstags-Quiz</h1>
-            <div class="subtitle">Eine Reise zurück ins Jahr 1976 🥂</div>
+            <div class="subtitle">Willkommen Karin zu deinem Geburtstagsquiz. Beantworte Fragen zu deinem Geburtsjahr 1976 und gewinne!</div>
             <div class="progress" id="progress-text">Frage 1 von 10</div>
             
             <div class="question-text" id="question-text">Lädt...</div>
@@ -510,7 +512,7 @@
 
             if (percentage >= 80) {
                 // Bestanden (>80%)
-                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Fantastisch! Du hast ein großartiges Wissen über dein Geburtsjahr bewiesen. Zur Feier des Tages haben wir eine besondere Überraschung für dich.</p>`;
+                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Fantastisch, Karin! Du hast ein großartiges Wissen über dein Geburtsjahr bewiesen. Zur Feier des Tages haben wir eine besondere Überraschung für dich.</p>`;
                 prizeSection.style.display = 'block';
                 
                 // RIESIGES KONFETTI BEIM GEWINN
@@ -518,9 +520,21 @@
 
             } else {
                 // Nicht bestanden (<80%)
-                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Das war schon sehr gut, aber da ist noch Luft nach oben! Wir wissen, dass du das besser kannst. Versuche es doch gleich noch einmal und hol dir deinen Preis!</p>`;
+                resultMessage.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.6;">Das war schon sehr gut, Karin, aber da ist noch Luft nach oben! Wir wissen, dass du das besser kannst. Versuche es doch gleich noch einmal und hol dir deinen Preis!</p>`;
                 prizeSection.style.display = 'none';
             }
+
+            // Silently save results to Supabase Database
+            const supabaseUrl = 'https://bylqtnrkdotrxdrpeiwa.supabase.co';
+            const supabaseKey = 'sb_publishable_pYAcBR92hHyW_-2Qks4dRw_IhnIOnpy';
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+            supabase.from('quiz_results').insert([
+                { score: score, total: questions.length }
+            ]).then(({ data, error }) => {
+                if (error) console.error("Fehler beim Speichern in Supabase:", error);
+                else console.log("Ergebnis erfolgreich gespeichert!");
+            });
         }
 
         // Quiz komplett zurücksetzen
